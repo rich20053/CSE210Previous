@@ -15,7 +15,7 @@ class Board():
         # Set initial Variables
         self.edge_size = selected_size
         self.size = selected_size * selected_size
-        #self.board_space = [self.size]
+        self.board = ""
         self.board_space = []
         for i in range (self.size):
             self.board_space.append(i+1)
@@ -28,22 +28,29 @@ class Board():
 
     def draw_board(self):
         # Draw current board object
-        
-        print("")
-        print("{}|{}|{}".format(self.board_space[0],self.board_space[1],self.board_space[2]))
-        print("-+-+-")
-        print("{}|{}|{}".format(self.board_space[3],self.board_space[4],self.board_space[5]))
-        print("-+-+-")
-        print("{}|{}|{}".format(self.board_space[6],self.board_space[7],self.board_space[8]))
-        print("")
-        """
-        for i in range(self.size):
-            for j in range(self.size):
-                print(self.board_space[i][j])
-                print
-                print("{} + {}i".format(self.real, self.imaginary))
 
-"""
+        print("")
+        self.board = ""
+
+        for i in range(self.size):
+            if self.edge_size > 3 and (i < 9 or self.board_space[i] != i+1):
+                self.board += " "
+            self.board += "{}".format(self.board_space[i])
+            if (i % self.edge_size != self.edge_size -1):
+                self.board += "|"
+            else:
+                self.board += "\n"
+                if i != self.size - 1:
+                    if self.edge_size > 3 and (i < 9 or self.board_space[i] != i+1 or (i > 8)):
+                        self.board += "-"
+                    self.board += "-" 
+                    for i in range(self.edge_size-1):
+                        self.board += "+-" 
+                        if self.edge_size > 3 and (i < 9 or self.board_space[i] != i+1):
+                            self.board += "-"
+                    self.board += "\n" 
+        print(self.board)
+        
     def mark_board(self, current_player_marker, selected_position):
         # mark the board with the player's choice
         if self.board_space[selected_position-1] == "x" or self.board_space[selected_position-1] == "o":
@@ -53,36 +60,56 @@ class Board():
         return (True)
 
     def check_rows(self):
-        if self.board_space[0] == self.board_space[1] and self.board_space[2] == self.board_space[1]:
-            return(True)
-        if self.board_space[3] == self.board_space[4] and self.board_space[3] == self.board_space[5]:
-            return(True)
-        if self.board_space[7] == self.board_space[8] and self.board_space[8] == self.board_space[6]:
-            return(True)
-        return(False)
+        row_filled = True
+        cell_value = "x"
+        for i in range (self.edge_size):
+            for j in range (self.edge_size):
+                if j == 0:
+                    cell_value = self.board_space[(i*self.edge_size)+j]
+                row_filled = row_filled and (self.board_space[(i*self.edge_size)+j] == cell_value)
+            if row_filled:
+                return(row_filled)
+            if i != self.edge_size - 1:
+                row_filled = True
+        return(row_filled)
             
     def check_columns(self):
-        if self.board_space[0] == self.board_space[self.edge_size] and self.board_space[0] == self.board_space[2*(self.edge_size)]:
-           return(True)
-        if self.board_space[1] == self.board_space[4] and self.board_space[1] == self.board_space[7]:
-            return(True)
-        if self.board_space[2] == self.board_space[5] and self.board_space[5] == self.board_space[8]:
-            return(True)
-        return(False)
+        column_filled = True
+        cell_value = "x"
+        for i in range (self.edge_size):
+            for j in range (self.edge_size):
+                if j == 0:
+                    cell_value = self.board_space[(j*self.edge_size)+i]
+                column_filled = column_filled and (self.board_space[(j*self.edge_size)+i] == cell_value)
+            if column_filled:
+                return(column_filled)
+            if i != self.edge_size - 1:
+                column_filled = True
+        return(column_filled)
             
     def check_diagonals(self):
-        if self.board_space[0] == self.board_space[self.edge_size+1] and self.board_space[0] == self.board_space[2*(self.edge_size+1)]:
-            return(True)
-        if self.board_space[self.edge_size-1] == self.board_space[self.edge_size+1] and self.board_space[self.edge_size+1] == self.board_space[2*(self.edge_size)]:
-            return(True)
-        return(False)
+
+        diagonal_filled = True
+        for j in range (0, self.size, self.edge_size + 1):
+            if j == 0:
+                cell_value = self.board_space[j]
+            diagonal_filled = diagonal_filled and (self.board_space[j] == cell_value)
+        if diagonal_filled:
+            return(diagonal_filled)
+
+        diagonal_filled = True
+        for j in range (self.size-self.edge_size, self.edge_size-2, -1*(self.edge_size-1)):
+            if j == self.size-self.edge_size:
+                cell_value = self.board_space[j]
+            diagonal_filled = diagonal_filled and (self.board_space[j] == cell_value)
+
+        return(diagonal_filled)
 
     def check_draw(self):
         for i in range(self.size):
            if self.board_space[i] == i+1:
                 return(False)
-        return(True)
-            
+        return(True)       
 
     def is_game_over(self):
         if self.check_rows() or self.check_columns() or self.check_diagonals():
@@ -110,19 +137,28 @@ def main():
 #   main function calls other functions
     player_x = Player("x")
     player_o = Player("o")
-    game_board = Board(3)
+
+    
+    board_size = int(input("Input how many spaces per side (3-9, but typically this is 3): "))
+
+    input_string_x = "x\'s turn to choose a square (1-{}): ".format(board_size**2)
+    input_string_o = "o\'s turn to choose a square (1-{}): ".format(board_size**2)
+ 
+    game_board = Board(board_size)
+    
+    game_board.draw_board()
 
     while (not(game_board.is_game_over())):
         valid_response = False
         while (not(valid_response)):
-            choice = int(input("x\'s turn to choose a square (1-9): "))
+            choice = int(input(input_string_x))
             valid_response = game_board.mark_board(player_x.get_marker(),choice)
         game_board.draw_board()
         if game_board.is_game_over():
             break
         valid_response = False
         while (not(valid_response)):
-            choice = int(input("o\'s turn to choose a square (1-9): "))
+            choice = int(input(input_string_o))
             valid_response = game_board.mark_board(player_o.get_marker(),choice)
         game_board.draw_board()
       
